@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hinglish-absa"
+version = "1.0.0"
+description = "Hinglish Aspect-Based Sentiment Analysis with code-mixed slang and informal expression support"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "scikit-learn>=1.0.0",
+    "scipy>=1.7.0",
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "joblib>=1.0.0",
+    "streamlit>=1.20.0",
+    "uvicorn>=0.15.0",
+    "starlette>=0.20.0",
+]
+
+[project.scripts]
+hinglish-absa = "hinglish_absa.cli:main"
