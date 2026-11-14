@@ -81,11 +81,17 @@ class LLMEnhancer:
         return bool(self.api_key and len(self.api_key.strip()) > 5)
 
     def analyze_with_gemini(self, text: str) -> Optional[Dict[str, Any]]:
-        """Call Gemini API via REST."""
+        """Call Gemini API via REST with automatic model fallback."""
         if not self.is_configured():
             return None
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={self.api_key.strip()}"
+        candidate_models = [
+            "gemini-flash-lite-latest",
+            "gemini-3.1-flash-lite",
+            "gemini-2.5-flash-lite",
+            "gemini-flash-latest"
+        ]
+
         payload = {
             "contents": [
                 {
@@ -100,22 +106,28 @@ class LLMEnhancer:
                 "response_mime_type": "application/json"
             }
         }
+        req_data = json.dumps(payload).encode("utf-8")
 
-        try:
-            req_data = json.dumps(payload).encode("utf-8")
-            req = urllib.request.Request(
-                url,
-                data=req_data,
-                headers={"Content-Type": "application/json"}
-            )
-            with urllib.request.urlopen(req, timeout=12) as response:
-                res_body = response.read().decode("utf-8")
-                res_json = json.loads(res_body)
-                raw_reply = res_json["candidates"][0]["content"]["parts"][0]["text"]
-                return json.loads(raw_reply)
-        except Exception as e:
-            # Silently fallback to local pipeline if API network/quota fails
-            return None
+        for model in candidate_models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={self.api_key.strip()}"
+            try:
+                req = urllib.request.Request(
+                    url,
+                    data=req_data,
+                    headers={
+                        "Content-Type": "application/json",
+                        "x-goog-api-key": self.api_key.strip()
+                    }
+                )
+                with urllib.request.urlopen(req, timeout=12) as response:
+                    res_body = response.read().decode("utf-8")
+                    res_json = json.loads(res_body)
+                    raw_reply = res_json["candidates"][0]["content"]["parts"][0]["text"]
+                    return json.loads(raw_reply)
+            except Exception:
+                continue
+
+        return None
 
     def analyze_with_openai(self, text: str) -> Optional[Dict[str, Any]]:
         """Call OpenAI API via REST."""
