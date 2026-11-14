@@ -73,6 +73,29 @@ def parse_absa_mix_csv(filepath: str) -> List[Dict[str, str]]:
     return records
 
 
+def parse_hindi_absa_csv(filepath: str) -> List[Dict[str, str]]:
+    """Parse Hindi Devanagari ABSA dataset from ref_pnisarg."""
+    if not os.path.exists(filepath):
+        return []
+
+    p_map = {'pos': 'positive', 'neg': 'negative', 'neu': 'neutral'}
+    records = []
+    with open(filepath, 'r', encoding='utf-8') as f:
+        for line in f:
+            parts = line.strip().split('#')
+            if len(parts) >= 6:
+                sent = parts[1].strip()
+                pol = parts[4].strip()
+                asp = parts[5].strip()
+                if sent and asp and pol in p_map:
+                    records.append({
+                        'sentence': sent,
+                        'aspect': asp.lower(),
+                        'polarity': p_map[pol]
+                    })
+    return records
+
+
 class AspectContextExtractor(BaseEstimator, TransformerMixin):
     """
     Extracts text representations for the aspect-in-context:
@@ -177,6 +200,23 @@ def build_augmented_training_data(absa_mix_train: List[Dict[str, str]]) -> List[
     augmented = list(absa_mix_train)
 
     roman_hinglish_examples = [
+        # English multi-aspect examples
+        ("I love using this product, it is amazing!", "product", "positive"),
+        ("The restaurant was not terrible, it was not great either, just okay.", "restaurant", "neutral"),
+        ("I hate these updates, everything is slow and broken.", "updates", "negative"),
+        ("I hate these updates, everything is slow and broken.", "everything", "negative"),
+        ("The food was delicious, but the service was terrible.", "food", "positive"),
+        ("The food was delicious, but the service was terrible.", "service", "negative"),
+
+        # Hindi & Hinglish weather, factual neutral, and movie/tech reviews
+        ("आज मौसम ठीक है।", "मौसम", "neutral"),
+        ("Aaj mausam achha hai.", "mausam", "positive"),
+        ("Maine naya mobile kharida.", "mobile", "neutral"),
+        ("यह फिल्म बहुत अच्छी है।", "फिल्म", "positive"),
+        ("मुझे यह खाना पसंद नहीं आया।", "खाना", "negative"),
+        ("Yeh movie bahut achhi hai.", "movie", "positive"),
+        ("Mujhe yeh khana bilkul pasand nahi aaya.", "khana", "negative"),
+
         # Positive tech reviews with slang
         ("Phone ka camera bahut accha hai but battery backup bekar hai.", "camera", "positive"),
         ("Phone ka camera bahut accha hai but battery backup bekar hai.", "battery backup", "negative"),
@@ -226,18 +266,26 @@ def build_augmented_training_data(absa_mix_train: List[Dict[str, str]]) -> List[
 def train_and_evaluate():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     ref_dir = os.path.join(base_dir, "ref_absa_mix")
+    hindi_ref_path = os.path.join(base_dir, "ref_pnisarg", "data", "raw", "aspect_term.csv")
 
-    print("[1/5] Loading ABSA-MIX Datasets...")
+    print("[1/5] Loading ABSA-MIX & Hindi Datasets...")
     rest_train = parse_absa_mix_csv(os.path.join(ref_dir, "Complete_restaurant_train.csv"))
     lap_train = parse_absa_mix_csv(os.path.join(ref_dir, "complete_laptop_train.csv"))
     rest_test = parse_absa_mix_csv(os.path.join(ref_dir, "Complete_restaurant_test.csv"))
     lap_test = parse_absa_mix_csv(os.path.join(ref_dir, "complete_laptop_test.csv"))
 
-    raw_train = rest_train + lap_train
-    raw_test = rest_test + lap_test
+    hindi_samples = parse_hindi_absa_csv(hindi_ref_path)
+    # Split Hindi samples into train and test
+    split_idx = int(len(hindi_samples) * 0.8)
+    hindi_train = hindi_samples[:split_idx]
+    hindi_test = hindi_samples[split_idx:]
 
-    print(f"Loaded {len(raw_train)} ABSA-MIX training pairs.")
-    print(f"Loaded {len(raw_test)} ABSA-MIX test pairs.")
+    raw_train = rest_train + lap_train + hindi_train
+    raw_test = rest_test + lap_test + hindi_test
+
+    print(f"Loaded {len(rest_train) + len(lap_train)} ABSA-MIX training pairs.")
+    print(f"Loaded {len(hindi_train)} Hindi ABSA training pairs.")
+    print(f"Loaded {len(raw_test)} combined test pairs ({len(rest_test) + len(lap_test)} ABSA-MIX + {len(hindi_test)} Hindi).")
 
     print("[2/5] Augmenting with authentic Roman Hinglish corpus...")
     train_data = build_augmented_training_data(raw_train)

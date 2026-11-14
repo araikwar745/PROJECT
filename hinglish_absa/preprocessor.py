@@ -113,6 +113,35 @@ class HinglishPreprocessor:
         text = re.sub(r"\s+", " ", text).strip()
         return text
 
+    def split_sentences(self, text: str) -> List[str]:
+        """
+        Split a review or paragraph into distinct sentences using multilingual sentence delimiters
+        including '.', '!', '?', '|', and Devanagari danda '।', and line breaks.
+        """
+        if not text or not isinstance(text, str):
+            return []
+
+        # Replace carriage returns and newlines with sentence breaks
+        normalized = unicodedata.normalize("NFKC", text)
+        cleaned = re.sub(r"[\r\n]+", " . ", normalized)
+
+        # Regex for sentence delimiters followed by whitespace or string end
+        raw_sentences = re.split(r"(?<=[.!?।|])\s+", cleaned)
+        sentences = []
+        for s in raw_sentences:
+            s_clean = s.strip().strip(".!?।| ")
+            if s_clean and len(s_clean) > 0:
+                sentences.append(s_clean)
+
+        return sentences if sentences else [text.strip()]
+
+    def is_single_word_or_short_phrase(self, text: str) -> bool:
+        """Check if input text is a single word or short exclamation (<= 3 words)."""
+        if not text:
+            return False
+        words = text.strip().split()
+        return len(words) <= 3
+
     def segment_clauses(self, text: str) -> List[Dict[str, Any]]:
         """
         Segment a code-mixed or Hindi sentence into grammatical clauses

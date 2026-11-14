@@ -20,7 +20,7 @@ from .preprocessor import HinglishPreprocessor
 
 # Hinglish and Hindi grammatical stop tokens and particles
 HINGLISH_GRAMMAR_WORDS = {
-    # Roman Hinglish particles
+    # Roman Hinglish particles and common function verbs
     "ka", "ki", "ke", "hai", "hain", "tha", "thi", "the", "hoga", "hogi", "hoge",
     "bhi", "toh", "to", "ko", "se", "me", "mein", "par", "pe", "aur", "and",
     "lekin", "but", "magar", "bhai", "yaar", "sirf", "ye", "yeh", "wo", "woh",
@@ -30,6 +30,9 @@ HINGLISH_GRAMMAR_WORDS = {
     "gaya", "gayi", "gaye", "karo", "karna", "kiya", "liye", "batao", "dekh", "dekho",
     "nahi", "nhi", "not", "so", "very", "too", "thoda", "thodi", "bahut", "bhot",
     "ekdum", "bilkul", "mast", "bekar", "awesome", "good", "bad", "great",
+    "using", "buying", "having", "watching", "playing", "eating", "getting", "doing",
+    "going", "seeing", "trying", "taking", "making", "feeling", "everything", "something",
+    "anything", "nothing", "all", "this", "that", "these", "those",
 
     # Devanagari Hindi particles
     "का", "की", "के", "है", "हैं", "था", "थी", "थे", "होगा", "होगी", "होंगे",
@@ -119,6 +122,20 @@ class HinglishAspectExtractor:
             re.IGNORECASE
         )
 
+        # Pattern 3: Sentiment verb + Determiner + [Aspect Target]
+        # e.g., 'hate these updates', 'love this product', 'love using this product'
+        self.sentiment_target_pattern = re.compile(
+            r"(?:hate|hated|love|loved|like|liked|dislike|disliked|enjoy|enjoyed)\s+(?:using|buying|watching|having|playing|eating|getting)?\s*(?:these|the|this|my|our|all|those)?\s*([a-zA-Z\u0900-\u097F]{3,20})",
+            re.IGNORECASE
+        )
+
+        # Pattern 4: [Target] + [hai/tha/thi/is/was/है/था/थी] + [Sentiment/Adjective]
+        # e.g., 'mausam achha hai', 'मौसम ठीक है', 'updates slow hai'
+        self.copula_aspect_pattern = re.compile(
+            r"([a-zA-Z\u0900-\u097F]{3,20})\s+(?:hai|tha|thi|hain|the|is|was|are|है|था|थी|हैं|थे)\s+(?:bahut|bhot|ekdum|bilkul|very|too|quite|kaafi|बहुत|एकदम|बिल्कुल|काफी)?\s*([a-zA-Z\u0900-\u097F]{3,20})",
+            re.IGNORECASE
+        )
+
     def resolve_category(self, term: str, context: str = "") -> str:
         """Map an aspect term to its canonical category, with context disambiguation."""
         term_lower = term.lower().strip()
@@ -205,6 +222,23 @@ class HinglishAspectExtractor:
                 sub_end = sub_start + len(valid_cand)
                 extracted_spans.append((sub_start, sub_end, valid_cand, cat, 0.90, "genitive_pattern"))
 
+        # 4. Check for sentiment verb target patterns (e.g. 'hate these updates' -> 'updates')
+        for match in self.sentiment_target_pattern.finditer(text):
+            target_word = match.group(1).strip()
+            if self.is_valid_aspect_candidate(target_word):
+                cat = self.resolve_category(target_word, context=text)
+                extracted_spans.append((match.start(1), match.end(1), target_word, cat, 0.88, "sentiment_target_pattern"))
+
+        # 5. Check for copula target patterns (e.g. 'mausam achha hai' -> 'mausam', 'मौसम ठीक है' -> 'मौसम')
+        for match in self.copula_aspect_pattern.finditer(text):
+            cand_noun = match.group(1).strip()
+            cand_sentiment = match.group(2).strip().lower()
+            # If the predicate is in sentiment or neutral lexicons, cand_noun is likely the aspect
+            if (cand_sentiment in POSITIVE_LEXICON or cand_sentiment in NEGATIVE_LEXICON or cand_sentiment in NEUTRAL_LEXICON):
+                if self.is_valid_aspect_candidate(cand_noun):
+                    cat = self.resolve_category(cand_noun, context=text)
+                    extracted_spans.append((match.start(1), match.end(1), cand_noun, cat, 0.88, "copula_pattern"))
+
         # Deduplicate overlapping spans:
         # Prefer longer compound term ('battery backup' over 'battery', 'बैटरी बैकअप' over 'बैटरी')
         extracted_spans.sort(key=lambda x: (x[0], -(x[1] - x[0])))
@@ -242,16 +276,29 @@ class HinglishAspectExtractor:
                         continue
                 final_spans.append(s)
 
-        # Fallback for implicit reviews
+        # Fallback for implicit reviews and general product mentions
         if not final_spans:
-            phone_matches = re.finditer(
-                r"(?:(?<=[\s,।;!?'\"()\[\]])|^)(phone|mobile|laptop|movie|film|hotel|restaurant|फोन|मोबाइल|लैपटॉप|मूवी|फिल्म|होटल)(?:(?=[\s,।;!?'\"()\[\]])|$)",
+            entity_matches = re.finditer(
+                r"(?:(?<=[\s,।;!?'\"()\[\]])|^)(phone|mobile|smartphone|laptop|movie|film|hotel|restaurant|product|service|food|updates?|mausam|weather|मौसम|फोन|मोबाइल|लैपटॉप|मूवी|फिल्म|होटल|खाना|सर्विस)(?:(?=[\s,।;!?'\"()\[\]])|$)",
                 text,
                 re.IGNORECASE
             )
-            for pm in phone_matches:
+            for pm in entity_matches:
                 t = (pm.group(1) if pm.lastindex else pm.group(0)).strip()
                 final_spans.append((pm.start(), pm.end(), t, self.resolve_category(t, context=text), 0.85, "fallback_entity"))
+
+        # Fallback for single words, short exclamations, or sentiment-heavy phrases without explicit nouns
+        # e.g., 'Bakwas', 'Mast', 'बकवास', 'Paisa vasool!', 'Awesome', 'Very bad'
+        if not final_spans and text.strip():
+            clean_input = text.strip()
+            norm_tokens = self.preprocessor.normalize_text(clean_input).lower().split()
+            has_sentiment = any(
+                t in POSITIVE_LEXICON or t in NEGATIVE_LEXICON or t in NEUTRAL_LEXICON
+                for t in norm_tokens
+            ) or bool(self.preprocessor.extract_emojis(clean_input))
+
+            if has_sentiment or len(clean_input.split()) <= 4:
+                final_spans.append((0, len(clean_input), "Overall Experience", "General / Product Quality", 0.90, "sentiment_target_fallback"))
 
         result = [
             ExtractedAspect(

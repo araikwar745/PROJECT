@@ -50,3 +50,14 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Secrets & Environment
+.env
+.env.local
+
+# External Reference Repositories
+ref_acsa_mix/
+ref_hemantbk/
+ref_jathinlohi/
+ref_neevthakor/
+ref_pnisarg/

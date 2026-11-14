@@ -9,6 +9,7 @@ from .pipeline import HinglishABSA, ABSAResult
 from .aspect_extractor import HinglishAspectExtractor, ExtractedAspect
 from .sentiment_classifier import HinglishSentimentClassifier, AspectSentimentResult
 from .preprocessor import HinglishPreprocessor
+from .llm_enhancer import LLMEnhancer
 
 __version__ = "1.0.0"
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "HinglishSentimentClassifier",
     "AspectSentimentResult",
     "HinglishPreprocessor",
+    "LLMEnhancer",
 ]

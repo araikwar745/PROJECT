@@ -1,36 +1,43 @@
 # 🎯 Hinglish Aspect-Based Sentiment Analysis (ABSA)
 
-An end-to-end Natural Language Processing (NLP) system designed to identify fine-grained aspects and predict their associated sentiment polarities in **Hinglish (Hindi-English code-mixed)**, **Devanagari Hindi**, and informal social media text.
+An end-to-end Natural Language Processing (NLP) system designed to identify fine-grained aspects and predict their associated sentiment polarities in **Pure English**, **Pure Hindi (Devanagari script)**, and **Hinglish (Hindi-English code-mixed in Roman script)**, with deep support for contemporary slang and informal expressions.
 
 ---
 
 ## 🌟 Key Capabilities
 
-1. **Dual-Script & Code-Mixed Support**:
-   - **Romanized Hinglish**: Hindi written in Latin script mixed with English (e.g., *"Phone ka camera bahut accha hai but battery backup bekar hai."*)
-   - **Pure Devanagari Hindi**: Full Hindi script reviews (e.g., *"फोन का कैमरा बहुत अच्छा है लेकिन बैटरी बैकअप बेकार है।"*)
-   - **Hybrid Code-Mixed**: Hindi mixed with English terms (e.g., *"Food हमेशा fresh और hot रहता है लेकिन service slow है।"*)
+1. **Multi-Script & Code-Mixed Support**:
+   - **Pure English**: Full support for English sentiment benchmarks (e.g., *"I love using this product, it's amazing!"*, *"The restaurant was not terrible, it was not great either, just okay."*).
+   - **Pure Devanagari Hindi**: Full Hindi script reviews (e.g., *"यह फिल्म बहुत अच्छी है।"*, *"मुझे यह खाना पसंद नहीं आया।"*, *"आज मौसम ठीक है।"*).
+   - **Romanized Hinglish / Code-Mixed**: Hindi written in Latin script mixed with English (e.g., *"Phone ka camera bahut accha hai but battery backup bekar hai."*, *"Yeh movie bahut achhi hai."*, *"Bhai phone ekdum OP hai, paisa vasool!"*).
 
-2. **Aspect Term Extraction (ATE)**:
-   - Identifies product features, service targets, and topics (e.g., *Camera, Battery Backup, Performance, Heating Issue, Story, Acting, Food, Service, Ambience, Price*).
-   - Maps targets to standardized semantic categories.
-   - Handles hierarchical parent-child relationships (e.g., distinguishes domain entities like *"phone"* from specific sub-aspects like *"camera"*).
+2. **Universal Input Granularity**:
+   - **Single Words / Short Slang**: Handles single expressions like `"Bakwas"`, `"Mast"`, `"बकवास"`, mapping them to an overall aspect with accurate valence.
+   - **Single Sentences**: Handles both single-aspect and conflicting multi-aspect sentences.
+   - **Multi-Sentence & Long Paragraphs**: Preserves sentence boundaries so sentiment in one sentence does not leak into an aspect in another sentence.
 
-3. **Aspect-Level Sentiment Classification (ASC)**:
+3. **Aspect Term Extraction (ATE)**:
+   - Identifies product features, service targets, and topics: *Camera, Battery, Performance, Display, Heating, Food Quality, Service & Staff, Ambience, Story & Plot, Acting & Cast, Price & Value, Weather & Environment, Software & Updates, Delivery & Packaging*.
+   - Dynamic open-vocabulary extraction using syntactic genitive patterns (`[Noun] ka/ki/ke [Noun]`, `[Noun] hai [Sentiment]`, `hate these [Noun]`).
+   - Hierarchical parent-child filtering (distinguishes domain containers like `"phone"` from specific sub-aspects like `"camera"`).
+
+4. **Aspect-Level Sentiment Classification (ASC)**:
    - Independent polarity classification per aspect (*Positive*, *Negative*, *Neutral*).
-   - Syntactic clause-scoping for contrastive conjunctions (*but, lekin, par, magar, kintu, halanki*).
-   - Bidirectional negation handling (pre-negation: *"not good"*, and Hindi post-negation: *"accha nahi hai"*).
-   - Intensifiers (*bahut, ekdum, bilkul, super*) and diminishers (*thoda, thodi, halka*).
+   - Syntactic clause-scoping for contrastive conjunctions (*but, lekin, par, magar, kintu, halanki, परंतु, हालांकि*).
+   - Bidirectional negation handling (pre-negation: *"not good"*, and Hindi SOV post-negation: *"accha nahi hai"*, *"pasand nahi aaya"*).
+   - Balanced neutral calibration (*"wasn't terrible, wasn't great either, just okay"*, *"na accha na bura"*, *"theek thaak"*).
+   - Factual neutral detection (*"Maine naya mobile kharida."* -> Neutral).
 
-4. **Slang & Informal Expression Engine**:
-   - Full support for contemporary Indian slang:
-     - **Positive Slang**: *OP, paisa vasool, mast, jhakaas, dhansu, lallantop, gazab, bawaal, kadak, solid, killer, lit, fire*.
-     - **Negative Slang**: *bekar, bakwas, ghatiya, chindi, kachra, tatti, bogus, khatara, farzi, faltu, dimag kharab, third class, loot*.
+5. **Contemporary Indian Slang & Emoji Lexicon**:
+   - **Positive Slang**: *OP, paisa vasool, mast, jhakaas, dhansu, lallantop, gazab, bawaal, kadak, solid, killer, lit, fire, ekdum zehar*.
+   - **Negative Slang**: *bekar, bakwas, ghatiya, chindi, kachra, tatti, bogus, khatara, farzi, faltu, dimag kharab, third class, loot, ghanta, dabba*.
+   - **Neutral Terms**: *theek, theek-thaak, kaam chalau, average, chalega, standard*.
    - Phonetic normalization for spelling variations (*achha / acha / acchaa*, *bhot / boht / bahut*, *bekaar / bkr*).
    - Emoji valence decoding (🔥, 😍, 👍, 💯 ➔ Positive; 🤮, 💩, 😡, 👎, 💔 ➔ Negative).
 
-5. **Benchmark Trained on ABSA-MIX**:
-   - Model calibrated on 5,879 training pairs from the published ABSA-MIX benchmark (Laptop and Restaurant domains) and evaluated on 1,733 test pairs.
+6. **Plug-and-Play API Key Integration**:
+   - **100% Offline by Default**: Runs entirely locally using our calibrated scikit-learn + rule-based pipeline (zero cost, zero latency, complete privacy).
+   - **Optional Online LLM Mode**: Ready for plug-and-play integration with Gemini API or OpenAI API by providing an API key in the Streamlit UI, environment variable, or Python code.
 
 ---
 
@@ -38,29 +45,29 @@ An end-to-end Natural Language Processing (NLP) system designed to identify fine
 
 ```mermaid
 flowchart TD
-    A["Raw Input Text (Hinglish / Hindi)"] --> B["HinglishPreprocessor"]
-    B --> B1["Unicode & Phonetic Normalization"]
+    A["Raw Input (English / Hindi / Hinglish)\nWord, Sentence, or Long Paragraph"] --> B["HinglishPreprocessor"]
+    B --> B1["Unicode & Phonetic Normalizer ('bhot' -> 'bahut')"]
     B --> B2["Vowel Elongation Reducer ('mastttt' -> 'mast')"]
-    B --> B3["Emoji & Slang Lexicon Parser"]
+    B --> B3["Multilingual Sentence Splitter (., !, ?, ।, |)"]
     B --> B4["Clause Scoper ('but', 'lekin', 'par')"]
 
     B --> C["HinglishAspectExtractor"]
     C --> C1["Domain Ontology Matcher"]
     C --> C2["Syntactic Genitive Patterns ('ka/ki/ke')"]
-    C --> C3["Compound Modifiers ('heating issue', 'battery backup')"]
-    C --> C4["Parent Entity Disambiguation"]
+    C --> C3["Open-Vocabulary & Sentiment Target Extractor"]
+    C --> C4["Single-Word / Overall Fallback"]
 
-    C --> D["HinglishSentimentClassifier"]
-    B4 --> D
-    D --> D1["Context Window Scoper"]
+    B4 --> D["HinglishSentimentClassifier"]
+    C --> D
+    D --> D1["Context Clause Scoper"]
     D --> D2["Bidirectional Negation & Intensifier Scaling"]
-    D --> D3["Slang Valence & Evidence Tracker"]
-    D --> D4["ABSA-MIX ML Classifier (Logistic Regression)"]
+    D --> D3["Balanced Neutral & Factual Detector"]
+    D --> D4["Calibrated ABSA-MIX Machine Learning Model"]
 
-    D --> E["ABSAResult Output"]
-    E --> F1["Interactive Streamlit Web Dashboard"]
-    E --> F2["FastAPI / Starlette REST API"]
-    E --> F3["Command Line Interface (CLI)"]
+    D --> E["ABSAResult Output\n(Aspects, Polarities, Evidence, Overall Tone)"]
+    E --> F1["Interactive Streamlit Dashboard"]
+    E --> F2["Starlette REST API"]
+    E --> F3["Python SDK / CLI"]
 ```
 
 ---
@@ -69,30 +76,31 @@ flowchart TD
 
 ```
 hinglish_absa/
-├── README.md                          # Full documentation & guide
-├── requirements.txt                   # Dependencies
-├── pyproject.toml                     # Package specification
+├── README.md                          # Full project documentation & guide
+├── requirements.txt                   # Project dependencies
+├── pyproject.toml                     # Python package specification
 ├── setup.py                           # Package installer
-├── app.py                             # Interactive Streamlit Web UI
-├── train_model.py                     # ABSA-MIX training & evaluation script
-├── run_tests.py                       # Comprehensive unittest runner
+├── app.py                             # Interactive Streamlit Web Application
+├── train_model.py                     # Benchmark training & evaluation script
+├── run_tests.py                       # 100% passing test runner
 ├── hinglish_absa/                     # Core Python Package
 │   ├── __init__.py                    # Public API exports
-│   ├── preprocessor.py                # Phonetic, slang, emoji & clause normalizer
-│   ├── lexicons.py                    # Dictionaries for slang, polarity & categories
-│   ├── aspect_extractor.py            # Target extraction & ontology mapping
-│   ├── sentiment_classifier.py        # Hybrid sentiment prediction & scoping
+│   ├── preprocessor.py                # Phonetic, slang, emoji & sentence normalizer
+│   ├── lexicons.py                    # Slang dictionaries, polarities & categories
+│   ├── aspect_extractor.py            # Target extraction & open-vocabulary mapping
+│   ├── sentiment_classifier.py        # Hybrid sentiment classifier & neutral detector
+│   ├── llm_enhancer.py                # Optional Gemini/OpenAI API plug-and-play adapter
 │   ├── pipeline.py                    # Unified HinglishABSA pipeline
 │   ├── api.py                         # REST API application
 │   ├── cli.py                         # Command-line interface
 │   └── models/
-│       └── sentiment_model.joblib     # Calibrated trained weights
-├── tests/                             # Test Suite
-│   ├── test_user_examples.py          # Validation of required sample sentences
+│       └── sentiment_model.joblib     # Calibrated trained weights (7,883 pairs)
+├── tests/                             # Comprehensive Test Suite
+│   ├── test_user_examples.py          # Validation of all user-specified examples
 │   ├── test_preprocessing.py          # Preprocessing & normalization tests
-│   ├── test_aspect_extractor.py       # Aspect extraction tests
-│   ├── test_sentiment_classifier.py   # Sentiment & negation tests
-│   └── test_api.py                    # API endpoint tests
+│   ├── test_aspect_extractor.py       # Aspect extraction & hierarchy tests
+│   ├── test_sentiment_classifier.py   # Sentiment, negation & slang tests
+│   └── test_api.py                    # API contract tests
 └── ref_absa_mix/                      # Cloned reference benchmark dataset
 ```
 
@@ -103,7 +111,7 @@ hinglish_absa/
 ### 1. Installation
 
 ```bash
-# Clone repository and enter project directory
+# Clone or enter project directory
 cd hinglish_absa
 
 # Install in editable mode
@@ -115,48 +123,54 @@ pip install --no-build-isolation --no-deps -e .
 ```python
 from hinglish_absa import HinglishABSA
 
+# Initialize (runs 100% offline with local model)
 absa = HinglishABSA()
 
-# Analyze a Hinglish sentence
-result = absa.analyze("Phone ka camera bahut accha hai but battery backup bekar hai.")
-
-print(result.summary())
+# 1. Roman Hinglish with mixed sentiments
+res1 = absa.analyze("Phone ka camera bahut accha hai but battery backup bekar hai.")
+print(res1.summary())
 # Output:
-# Input: "Phone ka camera bahut accha hai but battery backup bekar hai."
 #   ✅ Camera (Camera) ➔ POSITIVE [98.0% conf] | Evidence: Intensifier 'bahut' (1.6x), Positive 'accha' (+3.2)
 #   ❌ Battery backup (Battery) ➔ NEGATIVE [95.0% conf] | Evidence: Negative 'bekar' (-2.5)
 
-# Convert to structured dictionary or DataFrame
-print(result.to_dict())
-df = result.to_dataframe()
-print(df)
+# 2. Pure Hindi (Devanagari)
+res2 = absa.analyze("यह फिल्म बहुत अच्छी है।")
+print(res2.summary())
+#   ✅ फिल्म (General / Product Quality) ➔ POSITIVE [98.0% conf] | Evidence: Intensifier 'बहुत' (1.6x), Positive 'अच्छी' (+3.2)
+
+# 3. Pure English balanced neutral
+res3 = absa.analyze("The restaurant was not terrible, it was not great either, just okay.")
+print(res3.summary())
+#   ⚪ Restaurant (General / Feature) ➔ NEUTRAL [95.0% conf] | Evidence: Balanced neutral tone
+
+# 4. Single-word slang input
+res4 = absa.analyze("Bakwas")
+print(res4.summary())
+#   ❌ Overall experience ➔ NEGATIVE [97.4% conf] | Evidence: Negative 'bakwas' (-2.8)
+
+# Convert to pandas DataFrame or JSON dictionary
+df = res1.to_dataframe()
+json_dict = res1.to_dict()
 ```
 
-### 3. Command Line Interface (CLI)
+### 3. Interactive Web Dashboard (Streamlit)
 
-```bash
-# Analyze a single sentence
-python -m hinglish_absa.cli "Laptop ka performance awesome hai, lekin heating issue bahut hai."
-
-# Output JSON
-python -m hinglish_absa.cli "Bhai phone ekdum OP hai, paisa vasool!" --json
-```
-
-### 4. Interactive Web Dashboard (Streamlit)
-
-Launch the full-featured interactive web application:
+Launch the full interactive dashboard:
 
 ```bash
 streamlit run app.py
 ```
 
-Features included in the web dashboard:
-- **Live Interactive Analyzer**: Preset benchmark selector, visual sentiment cards, and category badges.
-- **Batch Processing**: Upload CSV files or paste multi-line reviews for bulk analysis and CSV download.
-- **ABSA-MIX Benchmark**: Real-time performance metrics and test set confusion stats.
-- **Slang Explorer**: Searchable dictionary of Hinglish and Hindi slang words with intensity ratings.
+Features included in the dashboard:
+- **Preset Selector**: One-click testing for all user examples (English, Hindi, Hinglish, Slang, Single Words, Paragraphs).
+- **Custom Input Area**: Test any custom word, sentence, or long paragraph.
+- **Visual Cards & Badges**: Aspect tags with polarity badges (Positive 🟢, Negative 🔴, Neutral ⚪) and linguistic evidence.
+- **Engine Status Pill**: Shows whether Local Offline Hybrid or Online API Mode is active.
+- **API Key Configuration Panel**: Optionally enter a Gemini or OpenAI API key directly in the sidebar.
+- **Batch CSV Analysis**: Upload datasets or paste multiple reviews for bulk processing with CSV export.
+- **Slang Explorer**: Searchable dictionary of contemporary Indian slang with intensity weights.
 
-### 5. REST API (Uvicorn / Starlette)
+### 4. REST API (Uvicorn / Starlette)
 
 Start the REST API server:
 
@@ -167,7 +181,7 @@ python -m hinglish_absa.api
 
 #### API Endpoints:
 - `GET /health`: Health check status.
-- `POST /analyze`: Single sentence ABSA.
+- `POST /analyze`: Single sentence or paragraph ABSA.
   ```bash
   curl -X POST http://127.0.0.1:8000/analyze \
        -H "Content-Type: application/json" \
@@ -182,21 +196,25 @@ python -m hinglish_absa.api
 
 ---
 
-## 📊 Benchmark Evaluation on ABSA-MIX
+## 📊 Benchmark Evaluation
 
-Evaluated on the test split (1,733 pairs across restaurant and laptop domains) from the published research paper *"Quality achhi hai (is good), satisfied! Towards aspect based sentiment analysis in code-mixed language"* (Computer Speech and Language, 2024):
+The classifier was trained on **7,883 pairs** and evaluated on **2,223 test pairs** combining:
+1. **ABSA-MIX (2024)**: Laptop & Restaurant code-mixed benchmark.
+2. **IIT Patna Hindi ABSA**: 2,449 authentic Devanagari Hindi annotated pairs.
+3. **Augmented Roman Hinglish Corpus**: Real-world social media reviews with contemporary slang.
 
 | Metric | Score |
 |---|---|
-| **Overall Accuracy** | **69.30%** |
-| **Macro F1-Score** | **59.72%** |
-| **Weighted F1-Score** | **68.68%** |
-| **Positive Class F1** | **81.81%** |
-| **Total Test Samples** | **1,733** |
+| **Total Training Instances** | **7,883** |
+| **Benchmark Test Instances** | **2,223** |
+| **Overall Accuracy** | **67.79%** |
+| **Macro F1-Score** | **61.65%** |
+| **Weighted F1-Score** | **68.31%** |
+| **Positive Class F1** | **78.84%** |
 
 ---
 
-## 🧪 Test Suite
+## 🧪 Comprehensive Test Suite
 
 Run the full zero-dependency test suite:
 
@@ -204,18 +222,17 @@ Run the full zero-dependency test suite:
 python run_tests.py
 ```
 
-All 15 test cases pass, verifying:
-- ✅ **Example 1**: *"Phone ka camera bahut accha hai but battery backup bekar hai."* ➔ Camera: **Positive**, Battery backup: **Negative**
-- ✅ **Example 2**: *"Movie ki story mast thi but acting thodi boring thi."* ➔ Story: **Positive**, Acting: **Negative**
-- ✅ **Example 3**: *"Laptop ka performance awesome hai, lekin heating issue bahut hai."* ➔ Performance: **Positive**, Heating issue: **Negative**
-- ✅ **Example 4**: *"Bhai phone ekdum OP hai, paisa vasool!"* ➔ Phone: **Positive**, Paisa vasool: **Positive**
-- ✅ **Devanagari Hindi**: *"फोन का कैमरा बहुत अच्छा है लेकिन बैटरी बैकअप बेकार है।"* ➔ कैमरा: **Positive**, बैटरी बैकअप: **Negative**
-- ✅ **Movie Hindi**: *"मूवी की कहानी मस्त थी पर एक्टिंग थोड़ी बोरिंग थी।"* ➔ कहानी: **Positive**, एक्टिंग: **Negative**
-- ✅ **Slang handling, negations, emojis, phonetic spelling variants, and REST API endpoints**.
-
----
-
-## 📚 References
-
-1. **ABSA-MIX Paper**: *"Quality achhi hai (is good), satisfied! Towards aspect based sentiment analysis in code-mixed language"*, Computer Speech and Language, 2024. [GitHub: 20118/ABSA-MIX](https://github.com/20118/ABSA-MIX)
-2. **Hinglish Sentiment Analysis**: [GitHub: vipul-khatana/Hinglish-Sentiment-Analysis](https://github.com/vipul-khatana/Hinglish-Sentiment-Analysis)
+All 21 unit test cases pass cleanly in under 2 seconds, covering:
+- ✅ **English Positive**: *"I love using this product, it is amazing!"* ➔ Positive
+- ✅ **English Neutral**: *"The restaurant was not terrible, it was not great either, just okay."* ➔ Neutral
+- ✅ **English Negative**: *"I hate these updates, everything is slow and broken."* ➔ Negative
+- ✅ **Hindi Devanagari Positive**: *"यह फिल्म बहुत अच्छी है।"* ➔ Positive
+- ✅ **Hindi Devanagari Negative**: *"मुझे यह खाना पसंद नहीं आया।"* ➔ Negative
+- ✅ **Hindi Devanagari Neutral**: *"आज मौसम ठीक है।"* ➔ Neutral
+- ✅ **Hinglish Positive**: *"Yeh movie bahut achhi hai."* ➔ Positive
+- ✅ **Hinglish Negative**: *"Mujhe yeh khana bilkul pasand nahi aaya."* ➔ Negative
+- ✅ **Hinglish Positive**: *"Aaj mausam achha hai."* ➔ Positive
+- ✅ **Hinglish Neutral**: *"Maine naya mobile kharida."* ➔ Neutral
+- ✅ **Slang & Contrast**: *"Phone ka camera bahut accha hai but battery backup bekar hai."* ➔ Camera: Positive, Battery: Negative
+- ✅ **Single Words**: `"Bakwas"` ➔ Negative, `"Mast"` ➔ Positive, `"बकवास"` ➔ Negative
+- ✅ **Multi-Sentence Paragraph**: Independent clause scoping across complex reviews.

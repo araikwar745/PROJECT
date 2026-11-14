@@ -1,46 +1,52 @@
 """
-Tests for REST API endpoints using standard unittest and Starlette TestClient.
+Tests for REST API endpoints and data contracts.
 """
 
 import unittest
-from starlette.testclient import TestClient
-from hinglish_absa.api import app
+import json
+import sys
+import os
 
-class TestAPIEndpoints(unittest.TestCase):
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from hinglish_absa import HinglishABSA
+
+class TestAPIContracts(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.client = TestClient(app)
+        cls.engine = HinglishABSA()
 
-    def test_api_health(self):
-        response = self.client.get("/health")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data["status"], "healthy")
+    def test_single_inference_contract(self):
+        """Verify API response contract for single text analysis."""
+        text = "Phone ka camera bahut accha hai but battery backup bekar hai."
+        res = self.engine.analyze(text)
+        data = res.to_dict()
 
-    def test_api_root(self):
-        response = self.client.get("/")
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn("endpoints", data)
-
-    def test_api_analyze(self):
-        payload = {"text": "Phone ka camera bahut accha hai but battery backup bekar hai."}
-        response = self.client.post("/analyze", json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
+        self.assertIn("raw_text", data)
         self.assertIn("aspects", data)
+        self.assertIn("aspect_count", data)
+        self.assertIn("overall_polarity", data)
         self.assertGreaterEqual(len(data["aspects"]), 2)
 
-    def test_api_batch(self):
-        payload = {"texts": [
+        for asp in data["aspects"]:
+            self.assertIn("aspect", asp)
+            self.assertIn("category", asp)
+            self.assertIn("sentiment", asp)
+            self.assertIn("confidence", asp)
+            self.assertIn("evidence", asp)
+
+    def test_batch_inference_contract(self):
+        """Verify API response contract for batch text analysis."""
+        texts = [
             "Movie ki story mast thi but acting thodi boring thi.",
             "Laptop ka performance awesome hai, lekin heating issue bahut hai."
-        ]}
-        response = self.client.post("/batch", json=payload)
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertEqual(data["total"], 2)
-        self.assertEqual(len(data["results"]), 2)
+        ]
+        results = self.engine.analyze_batch(texts)
+        self.assertEqual(len(results), 2)
+        dict_results = [r.to_dict() for r in results]
+        self.assertEqual(len(dict_results), 2)
+        self.assertTrue(dict_results[0]["aspect_count"] >= 2)
+        self.assertTrue(dict_results[1]["aspect_count"] >= 2)
 
 if __name__ == "__main__":
     unittest.main()

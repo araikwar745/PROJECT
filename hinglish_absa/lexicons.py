@@ -27,6 +27,8 @@ POSITIVE_LEXICON = {
     "kadak": 2.5,
     "faadu": 2.8,
     "fadu": 2.5,
+    "faad": 2.8,
+    "zehar": 2.8,
     "zabardast": 2.8,
     "shandar": 2.5,
     "shaandar": 2.8,
@@ -60,6 +62,10 @@ POSITIVE_LEXICON = {
     "maza": 2.2,
     "anand": 2.0,
     "tarif": 2.0,
+    "first class": 2.5,
+    "first-class": 2.5,
+    "a1": 2.5,
+    "fabulous": 2.8,
 
     # English standard positive words
     "good": 1.8,
@@ -161,6 +167,11 @@ NEGATIVE_LEXICON = {
     "third class": -2.8,
     "third-class": -2.8,
     "dimag kharab": -2.8,
+    "dimag ki dahi": -2.8,
+    "vaat lag gayi": -3.0,
+    "ghanta": -2.5,
+    "lallu": -2.2,
+    "dabba": -2.5,
     "hang": -2.2,
     "lag": -2.0,
     "laggy": -2.2,
@@ -183,6 +194,12 @@ NEGATIVE_LEXICON = {
     "fayda nhi": -2.2,
     "boring": -2.0,
     "bore": -1.8,
+    "hate": -2.8,
+    "hated": -2.8,
+    "broken": -2.5,
+    "kuch khaas nahi": -1.8,
+    "kuch khas nahi": -1.8,
+    "kuch khas nhi": -1.8,
 
     # English standard negative words
     "bad": -2.0,
@@ -252,28 +269,40 @@ NEGATIVE_LEXICON = {
 NEUTRAL_LEXICON = {
     "ok": 0.0,
     "okay": 0.0,
+    "just okay": 0.0,
+    "just ok": 0.0,
+    "just fine": 0.0,
     "average": 0.0,
     "theek": 0.0,
     "thik": 0.0,
+    "theek hai": 0.0,
+    "thik hai": 0.0,
     "theek thaak": 0.0,
     "thik thak": 0.0,
     "normal": 0.0,
     "so so": 0.0,
     "soso": 0.0,
     "chalega": 0.0,
+    "chalau": 0.0,
+    "kaam chalau": 0.0,
+    "timepass": 0.0,
     "guzara": 0.0,
     "guzare layak": 0.0,
     "standard": 0.0,
     "medium": 0.0,
-    "fine": 0.2,
+    "fine": 0.0,
     "moderate": 0.0,
     "fair": 0.1,
     "thek": 0.0,
     "theek-thaak": 0.0,
     "thik-thak": 0.0,
+    "thek-thak": 0.0,
     "ठीक": 0.0,
+    "ठीक है": 0.0,
     "सामान्य": 0.0,
+    "साधारण": 0.0,
     "औसत": 0.0,
+    "काम चलाऊ": 0.0,
     "ठीक-ठाक": 0.0,
     "ठीक ठाक": 0.0,
 }
@@ -493,10 +522,31 @@ ASPECT_CATEGORIES = {
         "माहौल", "सजावट", "सिटिंग", "बैठने की जगह"
     ],
 
+    # Weather & Nature
+    "Weather & Environment": [
+        "weather", "climate", "temperature", "rain", "rainfall", "sun", "sunny", "season", "monsoon",
+        "mausam", "mosam", "mousam", "hawa", "dhoop", "baarish", "barish", "thand", "garmi", "sardi",
+        "मौसम", "जलवायु", "बारिश", "धूप", "सर्दी", "गर्मी", "तापमान", "हवा"
+    ],
+
+    # Software & Updates
+    "Software, OS & Updates": [
+        "updates", "update", "patch", "software", "os", "system", "app", "application", "firmware",
+        "bug", "bugs", "glitch", "glitches", "interface", "ui", "gui", "windows 11", "windows 10",
+        "android", "ios", "version",
+        "अपडेट", "अपडेट्स", "सॉफ्टवेयर", "सिस्टम", "ऐप", "इंटरफेस", "फीचर्स", "फीचर", "वर्जन"
+    ],
+
+    # Delivery & Packaging
+    "Delivery & Packaging": [
+        "delivery", "shipping", "packaging", "packing", "package", "courier", "order", "parcel", "box",
+        "डिलीवरी", "पैकेजिंग", "पैकिंग", "कूरियर", "ऑर्डर"
+    ],
+
     # General Product / Overall
     "General / Product Quality": [
         "product", "phone", "mobile", "laptop", "movie", "film", "item", "quality",
-        "overall", "experience", "purchase", "deal", "brand",
-        "उत्पाद", "फोन", "मोबाइल", "लैपटॉप", "मूवी", "फिल्म"
+        "overall", "experience", "purchase", "deal", "brand", "gadget", "device",
+        "उत्पाद", "फोन", "मोबाइल", "लैपटॉप", "मूवी", "फिल्म", "डिवाइस"
     ]
 }
